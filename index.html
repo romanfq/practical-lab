@@ -115,7 +115,8 @@ textarea{min-height:110px;resize:vertical}
 .yours{white-space:pre-wrap;background:var(--bench);border-radius:8px;padding:10px 12px;font-size:.95rem}
 
 /* flashcard */
-.bonus-h{display:flex;align-items:center;gap:10px}
+.bonus-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag.retry,.bonus-h .tag.retry{background:var(--bad-soft);color:var(--bad)}
 .bonus-h .tag{background:var(--lilac-soft);color:var(--lilac)}
 .scene{perspective:1400px;width:100%}
 .fc{position:relative;width:100%;min-height:320px;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.3,.7,.2,1)}
@@ -223,7 +224,7 @@ function renderMap(){
     <span class="eyebrow">AQA GCSE Chemistry · Paper 1 Higher · Required practicals</span>
     <h1>Real exam questions, one practical at a time.</h1>
     <p>Every question comes straight from a past paper (June 2018 to June 2025 and the Specimen). Write your answer, open the official mark scheme, then mark yourself honestly. Bonus flashcards and relaxing quiz rounds sit between the questions.</p>
-    <div class="how"><span><i class="dot" style="background:var(--accent)"></i>Exam question</span><span><i class="dot" style="background:var(--lilac)"></i>Bonus flashcard</span><span><i class="dot" style="background:var(--gold)"></i>Relaxing round with lifelines</span></div>
+    <div class="how"><span><i class="dot" style="background:var(--accent)"></i>Exam question</span><span><i class="dot" style="background:var(--lilac)"></i>Bonus flashcard</span><span><i class="dot" style="background:var(--gold)"></i>Relaxing round with lifelines</span><span><i class="dot" style="background:var(--bad)"></i>Two-thirds of the marks or less? It comes back later for another go</span></div>
   </section>
   <div class="grid">${cells}</div>
   <div class="foot"><span>Progress is saved in this browser only.</span><span class="spacer"></span><span class="confirm" id="resetBox"><button class="btn ghost" id="reset" type="button">Reset progress</button></span></div>`;
@@ -254,11 +255,29 @@ function buildItems(L){
   qs.forEach((q,i)=>{out.push(q);while(c<cards.length&&pos[c]===i+1)out.push(cards[c++])});
   while(c<cards.length)out.splice(out.length-1,0,cards[c++]);
   return out}
-function startLevel(i){run={li:i,idx:0,score:0,res:[],items:buildItems(LEVELS[i]),ll:{fifty:false,phone:false,aud:false}};renderItem()}
+function startLevel(i){run={li:i,idx:0,score:0,res:[],best:{},tries:{},notice:"",items:buildItems(LEVELS[i]),ll:{fifty:false,phone:false,aud:false}};renderItem()}
 function steps(){return `<div class="steps" aria-hidden="true">${run.items.map((it,k)=>`<i class="${k<run.idx?(it.t==="card"?"c":"d"):k===run.idx?"now":""}"></i>`).join("")}</div>`}
-function head(){const L=LEVELS[run.li];return `<div class="bar"><button class="btn ghost" id="back" type="button">← Map</button><h2>${esc(L.title)}</h2><span class="spacer"></span><span class="pts"><b>${run.score}</b><span>/ ${maxOf(L)}</span></span></div>${steps()}`}
+function head(){const L=LEVELS[run.li];return `<div class="bar"><button class="btn ghost" id="back" type="button">← Map</button><h2>${esc(L.title)}</h2><span class="spacer"></span><span class="pts"><b>${run.score}</b><span>/ ${maxOf(L)}</span></span></div>${steps()}${notice()}`}
 function bindBack(){$("#back").onclick=()=>renderMap()}
-function next(got){run.res.push(got);run.score+=got;run.idx++;if(run.idx>=run.items.length)finish();else renderItem()}
+function ikey(it){return it.t+"|"+it.exam+"|"+it.q}
+function sameGroup(a,b){return !!(a&&b&&a.t==="q"&&b.t==="q"&&a.exam===b.exam&&a.q.slice(0,2)===b.q.slice(0,2))}
+function reshuffleOpts(m){const order=shuffle(m.opts.map((_,j)=>j));return Object.assign({},m,{opts:order.map(j=>m.opts[j]),ans:m.ans.map(a=>order.indexOf(a)).sort((x,y)=>x-y)})}
+// put a weak item back later in the level: at least 3 other items in between, never inside a multi-part question
+function reinsert(it){const n=run.items.length,min=run.idx+4,ok=p=>{const a=run.items[p-1],b=run.items[p];return !(sameGroup(a,b)&&!a.retry&&!b.retry)};
+  if(n-run.idx-1<1)return false;
+  let c=[];for(let p=min;p<=Math.min(n,min+3);p++)if(ok(p))c.push(p);
+  if(!c.length)for(let p=min;p<=n;p++)if(ok(p)){c.push(p);break}
+  const p=c.length?c[Math.floor(Math.random()*c.length)]:n;run.items.splice(Math.min(p,n),0,it);return true}
+const MAX_RETRIES=2;
+function next(got){
+  const it=run.items[run.idx],k=ikey(it);run.res.push(got);
+  if(!(k in run.best)){run.best[k]=got;run.score+=got}else if(got>run.best[k]){run.score+=got-run.best[k];run.best[k]=got}
+  const t=run.tries[k]||0;
+  if(got<=it.marks*2/3&&t<MAX_RETRIES&&reinsert(Object.assign(it.t==="mcq"?reshuffleOpts(it):Object.assign({},it),{retry:t+1}))){run.tries[k]=t+1;
+    run.notice=(it.t==="card"?"That bonus card":"That question")+" will come back later in this level for another go."}
+  run.idx++;if(run.idx>=run.items.length)finish();else renderItem()}
+function notice(){const n=run.notice;run.notice="";return n?`<div class="tip" role="status" style="margin-bottom:14px">${esc(n)}</div>`:""}
+function retryTag(it){return it.retry?`<span class="tag retry">${it.retry===1?"Second":"Third"} try · best counts</span>`:""}
 function renderItem(){
   window.scrollTo(0,0);const it=run.items[run.idx];
   if(it.t==="q")renderQ(it);else if(it.t==="card")renderCard(it);else renderMcq(it);
@@ -269,7 +288,7 @@ function renderQ(it){
   const L=LEVELS[run.li];
   const lh=Math.min(30,it.end-it.y);
   app.innerHTML=head()+`<article class="panel">
-    <div class="meta"><span class="tag">${esc(it.exam)} · Q${esc(it.q)}</span><span class="eyebrow">${it.marks} mark${it.marks>1?"s":""} · ${esc(it.rp==="PS"?"Practical skills":it.rp)}</span></div>
+    <div class="meta">${retryTag(it)}<span class="tag">${esc(it.exam)} · Q${esc(it.q)}</span><span class="eyebrow">${it.marks} mark${it.marks>1?"s":""} · ${esc(it.rp==="PS"?"Practical skills":it.rp)}</span></div>
     <div class="sheet" id="sheet"><div class="crop" id="crop" style="aspect-ratio:${it.W}/${it.end}">
       <img src="${it.img}" alt="Exam paper ${esc(it.exam)} question ${esc(it.q)} with its context" id="qimg">
       <div class="hl" style="top:${(100*(it.y-6)/it.end).toFixed(3)}%;height:${(100*lh/it.end).toFixed(3)}%"></div></div></div>
@@ -303,7 +322,7 @@ function renderQ(it){
 /* bonus flashcard */
 function renderCard(it){
   app.innerHTML=head()+`<article class="panel">
-    <div class="bonus-h"><span class="tag">Bonus card</span><span class="eyebrow">${esc(it.exam)} · Q${esc(it.q)}</span></div>
+    <div class="bonus-h">${retryTag(it)}<span class="tag">Bonus card</span><span class="eyebrow">${esc(it.exam)} · Q${esc(it.q)}</span></div>
     <div class="scene"><div class="fc" id="fc">
       <div class="face front"><span class="eyebrow">Question</span>
         <div class="qq">${esc(it.front)} <span class="mk2">(${it.marks})</span></div>
@@ -333,10 +352,10 @@ function rnd(a,b){return a+Math.random()*(b-a)}
 function renderMcq(it){
   const L=LEVELS[run.li],k=run.idx;
   const sel=new Set(),gone=new Set();let locked=false;
-  const ladder=run.items.map((x,j)=>`<span class="${j===k?"now":j<k?(run.res[j]===x.marks?"ok":"no"):""}">Q${j+1} · ${x.marks} pt${x.marks>1?"s":""}</span>`).join("");
-  app.innerHTML=`<div class="bar"><button class="btn ghost" id="back" type="button">← Map</button><h2>${esc(L.title.replace("Relaxing round: ",""))}</h2><span class="spacer"></span><span class="pts"><b>${run.score}</b><span>/ ${maxOf(L)}</span></span></div>
+  const ladder=run.items.map((x,j)=>`<span class="${j===k?"now":j<k?(run.res[j]===x.marks?"ok":"no"):""}">Q${j+1}${x.retry?" ↻":""} · ${x.marks} pt${x.marks>1?"s":""}</span>`).join("");
+  app.innerHTML=`<div class="bar"><button class="btn ghost" id="back" type="button">← Map</button><h2>${esc(L.title.replace("Relaxing round: ",""))}</h2><span class="spacer"></span><span class="pts"><b>${run.score}</b><span>/ ${maxOf(L)}</span></span></div>${notice()}
   <section class="stage">
-    <div class="row"><span class="eyebrow">Relaxing round · ${esc(it.exam)} · Q${esc(it.q)}</span><span class="spacer"></span>
+    <div class="row">${retryTag(it)}<span class="eyebrow">Relaxing round · ${esc(it.exam)} · Q${esc(it.q)}</span><span class="spacer"></span>
       <div class="lifelines">
         <button class="ll" id="l50" type="button" ${run.ll.fifty?"disabled":""} aria-label="Fifty fifty: remove two wrong answers">50:50</button>
         <button class="ll" id="lph" type="button" ${run.ll.phone?"disabled":""} aria-label="Phone a friend">${ICON.phone}</button>
