@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Erin's Practical Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a lab bench. Level map as a grid of element-style cells; play screens as one centred column with the real exam paper as the hero. */
+:root{
+  --bench:#EEF3F1; --card:#FFFFFF; --ink:#132238; --muted:#566676; --line:#CFDAD6;
+  --accent:#1D5FC2; --accent-soft:#E2ECFB; --accent-ink:#FFFFFF;
+  --lilac:#8A4FD6; --lilac-soft:#F1E9FC;
+  --ok:#17844A; --ok-soft:#E1F3E8; --bad:#C2392B; --bad-soft:#FBE6E3;
+  --paper:#FFFFFF; --paper-line:#C9D3D0; --shadow:0 1px 2px rgba(19,34,56,.08),0 6px 18px rgba(19,34,56,.06);
+  /* relaxing rounds: one deliberate stage look, same in both themes */
+  --stage:#0A1440; --stage-2:#16236B; --stage-line:#6F86E6; --gold:#F2B33D; --stage-ink:#EEF2FF; --pick:#F28C28;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bench:#0E161E; --card:#15202B; --ink:#E6EDF2; --muted:#9AA9B6; --line:#2A3846;
+  --accent:#6AA5FF; --accent-soft:#1A2B45; --accent-ink:#0B1422;
+  --lilac:#B996F2; --lilac-soft:#2A2140; --ok:#4CC383; --ok-soft:#14301F; --bad:#FF7B6B; --bad-soft:#3A1A17;
+  --paper:#F4F4F1; --paper-line:#3A4855; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bench:#0E161E; --card:#15202B; --ink:#E6EDF2; --muted:#9AA9B6; --line:#2A3846;
+  --accent:#6AA5FF; --accent-soft:#1A2B45; --accent-ink:#0B1422;
+  --lilac:#B996F2; --lilac-soft:#2A2140; --ok:#4CC383; --ok-soft:#14301F; --bad:#FF7B6B; --bad-soft:#3A1A17;
+  --paper:#F4F4F1; --paper-line:#3A4855; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.3); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bench);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bench)}
+.wrap{max-width:880px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.btn{border:0;border-radius:999px;padding:.7em 1.3em;background:var(--accent);color:var(--accent-ink);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:.5em}
+.btn:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.lilac{background:var(--lilac);color:#fff}
+.eyebrow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bench);border-bottom:1px solid var(--line);margin-bottom:20px}
+.top .wrap{display:flex;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:800;font-size:1.15rem;letter-spacing:-.01em;display:flex;align-items:center;gap:10px;cursor:pointer;background:none;border:0;padding:0}
+.flask{width:26px;height:26px}
+.spacer{flex:1}
+.pts{display:flex;align-items:baseline;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 14px}
+.pts b{font-family:var(--f-mono);font-size:1.05rem}
+.pts span{font-size:.8rem;color:var(--muted)}
+
+/* map */
+.hero{display:grid;gap:14px;margin:6px 0 22px}
+.hero h1{font-size:clamp(2rem,6vw,3.3rem);font-weight:800;letter-spacing:-.02em}
+.hero p{margin:0;max-width:62ch;color:var(--muted)}
+.how{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.92rem}
+.how span{display:flex;gap:8px;align-items:center}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cell{position:relative;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px 12px;min-height:150px;display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:transform .15s,border-color .15s}
+.cell:hover:not([disabled]){transform:translateY(-2px);border-color:var(--accent)}
+.cell[disabled]{cursor:not-allowed;opacity:.5}
+.cell .z{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);display:flex;justify-content:space-between}
+.cell .sym{font-family:var(--f-display);font-weight:800;font-size:2.1rem;line-height:1;letter-spacing:-.03em;margin-top:4px}
+.cell .nm{font-weight:700;font-size:.95rem;line-height:1.2}
+.cell .ms{margin-top:auto;font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.cell.relax{background:var(--stage);border-color:var(--stage-2);color:var(--stage-ink)}
+.cell.relax .z,.cell.relax .ms{color:#AFC0FF}
+.cell.relax .sym{color:var(--gold)}
+.cell.done{border-color:var(--ok)}
+.cell .chip{position:absolute;right:10px;top:30px;font-size:.7rem;font-family:var(--f-mono);padding:2px 7px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.cell.relax .chip{background:#1E3A2A;color:#7EE2A8}
+.ind{height:6px;border-radius:3px;background:linear-gradient(90deg,#D7263D,#F46036,#F9C80E,#9BC53D,#2E9E5B,#1B7FBF,#3D3B9E,#6A2C91);position:relative;margin-top:6px}
+.ind i{position:absolute;top:-4px;width:4px;height:14px;border-radius:2px;background:var(--ink);transform:translateX(-50%)}
+.cell.relax .ind i{background:#fff}
+.foot{margin-top:28px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:var(--muted);font-size:.85rem}
+.foot .btn{font-size:.85rem;padding:.45em 1em}
+
+/* play */
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.bar h2{font-size:1.4rem;font-weight:800}
+.steps{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:18px}
+.steps i{height:6px;flex:1 1 14px;min-width:10px;max-width:46px;border-radius:3px;background:var(--line)}
+.steps i.c{background:var(--lilac)} .steps i.d{background:var(--accent)} .steps i.now{background:var(--ink)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;display:grid;gap:14px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.tag{font-family:var(--f-mono);font-size:.75rem;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:700}
+.sheet{background:var(--paper);border:1px solid var(--paper-line);border-radius:8px;max-height:64vh;overflow:auto;position:relative}
+.crop{position:relative;overflow:hidden;width:100%;max-width:100%}
+.crop img{position:absolute;left:0;top:0;width:100%;display:block}
+.sheet.zoom .crop{width:820px;max-width:none}
+.helper+.helper,#helpP:not(:empty)+#helpA:not(:empty){margin-top:10px}
+.hl{position:absolute;left:0;right:0;background:color-mix(in srgb,var(--pick) 22%,transparent);border-left:5px solid var(--pick);pointer-events:none}
+.tip{font-size:.9rem;background:var(--lilac-soft);border-radius:8px;padding:8px 12px}
+label.lab{font-weight:700;font-size:.95rem}
+textarea,input[type=number]{font:inherit;color:var(--ink);background:var(--bench);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+textarea{min-height:110px;resize:vertical}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.msbox{display:grid;gap:10px;border-top:1px dashed var(--line);padding-top:14px}
+.msimg{background:#fff;border:1px solid var(--paper-line);border-radius:8px;overflow-x:auto}
+.msimg img{display:block;width:100%;min-width:520px}
+.marks{display:flex;flex-wrap:wrap;gap:8px}
+.mk{min-width:46px;height:46px;border-radius:10px;border:1.5px solid var(--line);background:var(--bench);font-family:var(--f-mono);font-weight:700;font-size:1.05rem;cursor:pointer}
+.mk[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.yours{white-space:pre-wrap;background:var(--bench);border-radius:8px;padding:10px 12px;font-size:.95rem}
+
+/* flashcard */
+.bonus-h{display:flex;align-items:center;gap:10px}
+.bonus-h .tag{background:var(--lilac-soft);color:var(--lilac)}
+.scene{perspective:1400px;width:100%}
+.fc{position:relative;width:100%;min-height:320px;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.3,.7,.2,1)}
+.fc.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;padding:22px 22px 64px;display:flex;flex-direction:column;gap:12px;overflow:auto;border:1.5px solid var(--line);background:var(--card);box-shadow:var(--shadow)}
+.face.front{background:linear-gradient(160deg,var(--lilac-soft),var(--card) 60%)}
+.face.back{transform:rotateY(180deg)}
+.face .qq{font-family:var(--f-display);font-size:clamp(1.15rem,3.2vw,1.45rem);font-weight:700;line-height:1.3}
+.face .qq .mk2{font-family:var(--f-mono);color:var(--lilac);white-space:nowrap}
+.face ul{margin:0;padding-left:1.2em;display:grid;gap:8px}
+.face li small{display:block;color:var(--muted);font-size:.82rem}
+.face .note{font-size:.85rem;color:var(--muted);border-left:3px solid var(--lilac);padding-left:10px}
+.flipbtn{position:absolute;right:14px;bottom:14px;width:44px;height:44px;border-radius:50%;border:0;background:var(--lilac);color:#fff;cursor:pointer;display:grid;place-items:center;box-shadow:var(--shadow)}
+.flipbtn svg{width:22px;height:22px}
+.selfev{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}.selfev label{display:block;margin-bottom:6px}
+.selfev input{max-width:140px}
+.err{color:var(--bad);font-size:.88rem;min-height:1.2em}
+
+/* millionaire stage */
+.stage{background:radial-gradient(120% 90% at 50% 0%,var(--stage-2),var(--stage) 70%);color:var(--stage-ink);border-radius:18px;padding:18px;display:grid;gap:16px;box-shadow:var(--shadow)}
+.stage .eyebrow{color:#AFC0FF}
+.lifelines{display:flex;gap:10px;flex-wrap:wrap}
+.ll{width:64px;height:44px;border-radius:50%;border:2px solid var(--stage-line);background:rgba(255,255,255,.04);color:var(--stage-ink);font-family:var(--f-mono);font-weight:700;font-size:.8rem;cursor:pointer;display:grid;place-items:center}
+.ll svg{width:22px;height:22px}
+.ll[disabled]{opacity:.3;cursor:not-allowed;text-decoration:line-through}
+.lozenge{border:2px solid var(--stage-line);border-radius:999px/40px;padding:16px 24px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0));font-size:1.08rem;text-align:center}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;border:2px solid var(--stage-line);border-radius:999px;padding:12px 18px;background:rgba(10,20,64,.6);color:var(--stage-ink);cursor:pointer;min-height:54px}
+.opt b{color:var(--gold);font-family:var(--f-mono)}
+.opt:hover:not([disabled]){background:rgba(111,134,230,.2)}
+.opt.sel{background:var(--pick);border-color:var(--pick);color:#1A0E00}
+.opt.sel b{color:#1A0E00}
+.opt.right{background:#1F9D55;border-color:#1F9D55;color:#fff} .opt.right b{color:#fff}
+.opt.wrong{background:#B03A2E;border-color:#B03A2E;color:#fff} .opt.wrong b{color:#fff}
+.opt.gone{visibility:hidden}
+.ladder{display:flex;gap:6px;flex-wrap:wrap}
+.ladder span{font-family:var(--f-mono);font-size:.78rem;padding:4px 10px;border-radius:999px;border:1px solid #3A4C9A;color:#AFC0FF}
+.ladder span.now{background:var(--gold);color:#1A0E00;border-color:var(--gold)}
+.ladder span.ok{border-color:#1F9D55;color:#7EE2A8}
+.ladder span.no{border-color:#B03A2E;color:#FFB4AA}
+.helper{border:1px dashed var(--stage-line);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
+.aud{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:8px;align-items:end;height:120px}
+.aud div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;font-family:var(--f-mono);font-size:.75rem}
+.aud div i{display:block;width:70%;background:var(--gold);border-radius:4px 4px 0 0}
+.verdict{border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.07)}
+.small{font-size:.8rem;color:#AFC0FF}
+
+/* summary */
+.done-panel{text-align:center;justify-items:center}
+.big{font-family:var(--f-display);font-weight:800;font-size:clamp(2.6rem,9vw,4.2rem);letter-spacing:-.03em}
+.indwide{width:min(100%,420px);height:14px;border-radius:7px}
+.indwide i{height:24px;top:-5px;width:6px}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media (max-width:560px){.opts{grid-template-columns:1fr}.panel{padding:14px}.fc{min-height:380px}.lozenge{border-radius:18px}}
+@media (prefers-reduced-motion:reduce){.fc,.cell{transition:none}}
+</style>
+
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <button class="brand" id="home" type="button" aria-label="Back to level map">
+    <svg class="flask" viewBox="0 0 32 32" aria-hidden="true"><path d="M12 3h8M13.5 3v8.5L5.5 25a3 3 0 0 0 2.6 4.5h15.8a3 3 0 0 0 2.6-4.5L18.5 11.5V3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 20h14l3.2 5.4a1.6 1.6 0 0 1-1.4 2.4H7.2a1.6 1.6 0 0 1-1.4-2.4Z" fill="var(--lilac)"/></svg>
+    Erin's Practical Lab
+  </button>
+  <div class="spacer"></div>
+  <div class="pts" title="Best score from every level, added up"><b id="total">0</b><span>points</span></div>
+</div></header>
+<main class="wrap" id="app"></main>
+
+<script>
+const LEVELS=[{"id":"L1","kind":"main","title":"Making Salts","code":"RP1","sub":"Pure, dry crystals from an acid and an insoluble base","items":[{"t":"q","exam":"June 2018","q":"01.3","marks":6,"rp":"RP1","img":"img/qp_june2018_1.webp","W":753,"end":273,"y":209,"ms":"img/ms_june2018_01.3.webp","paper":false},{"t":"q","exam":"June 2021","q":"05.4","marks":3,"rp":"RP1","img":"img/qp_june2021_5.webp","W":753,"end":1362,"y":1115,"ms":"img/ms_june2021_05.4.webp","paper":false},{"t":"q","exam":"June 2021","q":"05.5","marks":1,"rp":"RP1","img":"img/qp_june2021_5.webp","W":753,"end":1423,"y":1368,"ms":"img/ms_june2021_05.5.webp","paper":false},{"t":"q","exam":"June 2022","q":"04.1","marks":1,"rp":"RP1","img":"img/qp_june2022_4.webp","W":753,"end":327,"y":213,"ms":"img/ms_june2022_04.1.webp","paper":false},{"t":"card","exam":"June 2024","q":"01.6","marks":2,"front":"Some salts can be produced by reacting sulfuric acid with a metal. Neither copper nor sodium is used to produce a salt with sulfuric acid. Give one reason why each metal is not used.","pts":[["Copper: (copper) does not react with (sulfuric) acid","allow is unreactive / will not displace hydrogen / is below hydrogen in the reactivity series"],["Sodium: (sodium) could explode or could get too hot","allow (the reaction is) dangerous"]],"note":""},{"t":"q","exam":"June 2022","q":"04.2","marks":1,"rp":"RP1","img":"img/qp_june2022_4.webp","W":753,"end":388,"y":333,"ms":"img/ms_june2022_04.2.webp","paper":false},{"t":"q","exam":"June 2022","q":"04.4","marks":2,"rp":"RP1","img":"img/qp_june2022_4.webp","W":753,"end":683,"y":475,"ms":"img/ms_june2022_04.4.webp","paper":false},{"t":"q","exam":"June 2023","q":"03.1","marks":6,"rp":"RP1","img":"img/qp_june2023_3.webp","W":753,"end":119,"y":50,"ms":"img/ms_june2023_03.1.webp","paper":false},{"t":"q","exam":"June 2024","q":"01.2","marks":1,"rp":"RP1","img":"img/qp_june2024_1.webp","W":753,"end":505,"y":435,"ms":"img/ms_june2024_01.2.webp","paper":false},{"t":"card","exam":"June 2023","q":"03.2","marks":2,"front":"Name two other substances that can each be reacted with a dilute acid to make zinc chloride. Do not refer to zinc carbonate in your answer.","pts":[["Any two from:",""],["zinc","allow Zn"],["zinc oxide","allow ZnO"],["zinc hydroxide","allow Zn(OH)₂"]],"note":""},{"t":"q","exam":"June 2024","q":"01.3","marks":1,"rp":"RP1","img":"img/qp_june2024_1.webp","W":753,"end":560,"y":511,"ms":"img/ms_june2024_01.3.webp","paper":false},{"t":"q","exam":"June 2024","q":"01.4","marks":1,"rp":"RP1","img":"img/qp_june2024_1.webp","W":753,"end":616,"y":566,"ms":"img/ms_june2024_01.4.webp","paper":false},{"t":"q","exam":"June 2025","q":"09.1","marks":6,"rp":"RP1","img":"img/qp_june2025_9.webp","W":753,"end":398,"y":313,"ms":"img/ms_june2025_09.1.webp","paper":false},{"t":"q","exam":"Specimen","q":"05.1","marks":4,"rp":"RP1","img":"img/qp_specimen_5.webp","W":793,"end":201,"y":128,"ms":"img/ms_specimen_05.1.webp","paper":false}]},{"id":"R1","kind":"relax","title":"Relaxing round: Acids & Bonds","code":"","sub":"Five quick tick-box questions","items":[{"t":"mcq","exam":"June 2019","q":"02.1","stem":"This question is about acids and alkalis. Which ion do all acids produce in aqueous solution?","opts":["H⁺","H⁻","O²⁻","OH⁻"],"ans":[0],"ms":"H⁺","marks":1},{"t":"mcq","exam":"June 2021","q":"05.3","stem":"Soluble salts can be produced by reacting dilute hydrochloric acid with an insoluble solid. Copper, copper carbonate and copper oxide are insoluble solids. Which of these insoluble solids can be used to make a copper salt by reacting the solid with dilute hydrochloric acid?","opts":["Copper and copper carbonate only","Copper and copper oxide only","Copper carbonate and copper oxide only","Copper, copper carbonate and copper oxide"],"ans":[2],"ms":"copper carbonate and copper oxide only","marks":1},{"t":"mcq","exam":"June 2020","q":"01.1","stem":"This question is about structure and bonding. Which two substances have intermolecular forces between particles?","opts":["Diamond","Magnesium","Poly(ethene)","Sodium chloride","Water"],"ans":[2,4],"ms":"poly(ethene) (1 mark); water (1 mark)","marks":2},{"t":"mcq","exam":"June 2019","q":"01.3","stem":"Mendeleev arranged the elements in order of their atomic weight. What is the modern name for atomic weight?","opts":["Atomic number","Mass number","Relative atomic mass","Relative formula mass"],"ans":[2],"ms":"relative atomic mass","marks":1},{"t":"mcq","exam":"June 2021","q":"01.5","stem":"Propanone is a liquid with a low boiling point. Why does propanone have a low boiling point?","opts":["The covalent bonds are strong.","The covalent bonds are weak.","The intermolecular forces are strong.","The intermolecular forces are weak."],"ans":[3],"ms":"the intermolecular forces are weak","marks":1}]},{"id":"L2","kind":"main","title":"Titration I","code":"RP2","sub":"Burettes, pipettes and concordant titres","items":[{"t":"q","exam":"June 2018","q":"09.3","marks":5,"rp":"RP2","img":"img/qp_june2018_9.webp","W":753,"end":846,"y":380,"ms":"img/ms_june2018_09.3.webp","paper":false},{"t":"q","exam":"June 2018","q":"09.4","marks":2,"rp":"RP2","img":"img/qp_june2018_9.webp","W":753,"end":943,"y":852,"ms":"img/ms_june2018_09.4.webp","paper":false},{"t":"q","exam":"June 2019","q":"02.3","marks":1,"rp":"RP2","img":"img/qp_june2019_2.webp","W":753,"end":1140,"y":1089,"ms":"img/ms_june2019_02.3.webp","paper":false},{"t":"q","exam":"June 2019","q":"02.4","marks":1,"rp":"RP2","img":"img/qp_june2019_2.webp","W":753,"end":1233,"y":1146,"ms":"img/ms_june2019_02.4.webp","paper":false},{"t":"card","exam":"June 2022","q":"08.1","marks":4,"front":"Explain why the pH of an acid depends on: the strength of the acid; the concentration of the acid.","pts":[["pH depends on H⁺ ion concentration; the higher the concentration of H⁺ ions the lower the pH","General principle"],["The stronger an acid, the greater the ionisation / dissociation (in aqueous solution)","Strength"],["(So) the stronger the acid, the lower the pH","Strength"],["The higher the concentration of an acid, the more acid / solute in the same volume (of solution); (so) the higher the concentration of the acid the lower the pH","Concentration"]],"note":"Marked by levels: Level 2 (3–4 marks) relevant points identified in detail and logically linked; Level 1 (1–2 marks) attempts at logical linking."},{"t":"q","exam":"June 2019","q":"02.5","marks":6,"rp":"RP2","img":"img/qp_june2019_2.webp","W":753,"end":1404,"y":1239,"ms":"img/ms_june2019_02.5.webp","paper":false},{"t":"q","exam":"June 2020","q":"09.5","marks":3,"rp":"RP2","img":"img/qp_june2020_9.webp","W":753,"end":2043,"y":1989,"ms":"img/ms_june2020_09.5.webp","paper":false},{"t":"q","exam":"June 2020","q":"09.6","marks":2,"rp":"RP2","img":"img/qp_june2020_9.webp","W":753,"end":2162,"y":2049,"ms":"img/ms_june2020_09.6.webp","paper":false},{"t":"card","exam":"June 2018","q":"09.1","marks":2,"front":"Dilute hydrochloric acid is a strong acid. Explain why an acid can be described as both strong and dilute.","pts":[["(Strong because) completely ionised (in aqueous solution)","allow dissociated for ionised; do not accept hydrogen is ionising / H⁺ are ionised; ignore pH"],["(Dilute because) small amount of acid per unit volume","ignore low concentration"]],"note":""},{"t":"q","exam":"June 2020","q":"09.7","marks":3,"rp":"RP2","img":"img/qp_june2020_9.webp","W":753,"end":2422,"y":2168,"ms":"img/ms_june2020_09.7.webp","paper":false},{"t":"q","exam":"June 2021","q":"09.3","marks":2,"rp":"RP2","img":"img/qp_june2021_9.webp","W":753,"end":1358,"y":1223,"ms":"img/ms_june2021_09.3.webp","paper":false},{"t":"q","exam":"June 2021","q":"09.5","marks":3,"rp":"RP2","img":"img/qp_june2021_9.webp","W":753,"end":1794,"y":1570,"ms":"img/ms_june2021_09.5.webp","paper":false},{"t":"q","exam":"June 2022","q":"08.2","marks":2,"rp":"RP2","img":"img/qp_june2022_8.webp","W":753,"end":539,"y":170,"ms":"img/ms_june2022_08.2.webp","paper":false}]},{"id":"L3","kind":"main","title":"Titration II","code":"RP2","sub":"From titre to concentration","items":[{"t":"q","exam":"June 2022","q":"08.3","marks":4,"rp":"RP2","img":"img/qp_june2022_8.webp","W":753,"end":1454,"y":545,"ms":"img/ms_june2022_08.3.webp","paper":false},{"t":"q","exam":"June 2023","q":"05.3","marks":2,"rp":"RP2","img":"img/qp_june2023_5.webp","W":753,"end":796,"y":539,"ms":"img/ms_june2023_05.3.webp","paper":false},{"t":"q","exam":"June 2023","q":"05.5","marks":5,"rp":"RP2","img":"img/qp_june2023_5.webp","W":753,"end":1370,"y":897,"ms":"img/ms_june2023_05.5.webp","paper":false},{"t":"q","exam":"June 2024","q":"09.3","marks":3,"rp":"RP2","img":"img/qp_june2024_9.webp","W":753,"end":508,"y":225,"ms":"img/ms_june2024_09.3.webp","paper":false},{"t":"card","exam":"June 2024","q":"09.1","marks":2,"front":"Acids can be either weak or strong. What is meant by ‘a weak acid’?","pts":[["(An acid which) is partially ionised","allow partially dissociated"],["in aqueous solution","allow (when dissolved) in water; this mark depends on the first one"]],"note":""},{"t":"q","exam":"June 2024","q":"09.4","marks":2,"rp":"RP2","img":"img/qp_june2024_9.webp","W":753,"end":734,"y":514,"ms":"img/ms_june2024_09.4.webp","paper":false},{"t":"q","exam":"June 2025","q":"08.2","marks":4,"rp":"RP2","img":"img/qp_june2025_8.webp","W":753,"end":735,"y":515,"ms":"img/ms_june2025_08.2.webp","paper":false},{"t":"q","exam":"June 2025","q":"08.3","marks":1,"rp":"RP2","img":"img/qp_june2025_8.webp","W":753,"end":1283,"y":741,"ms":"img/ms_june2025_08.3.webp","paper":false},{"t":"card","exam":"June 2024","q":"09.2","marks":2,"front":"Explain what happens to the pH of an acid as the acid is diluted with water.","pts":[["pH increases",""],["(because) the concentration of hydrogen ions decreases",""]],"note":""},{"t":"q","exam":"June 2025","q":"08.4","marks":4,"rp":"RP2","img":"img/qp_june2025_8.webp","W":753,"end":1796,"y":1289,"ms":"img/ms_june2025_08.4.webp","paper":false},{"t":"q","exam":"Specimen","q":"08.3","marks":4,"rp":"RP2","img":"img/qp_specimen_8.webp","W":793,"end":678,"y":411,"ms":"img/ms_specimen_08.3.webp","paper":false},{"t":"q","exam":"Specimen","q":"08.4","marks":2,"rp":"RP2","img":"img/qp_specimen_8.webp","W":793,"end":829,"y":684,"ms":"img/ms_specimen_08.4.webp","paper":false},{"t":"q","exam":"Specimen","q":"08.5","marks":4,"rp":"RP2","img":"img/qp_specimen_8.webp","W":793,"end":1039,"y":835,"ms":"img/ms_specimen_08.5.webp","paper":false}]},{"id":"R2","kind":"relax","title":"Relaxing round: Strong or Weak?","code":"","sub":"Five quick tick-box questions","items":[{"t":"mcq","exam":"June 2021","q":"09.1","stem":"Hydrogen chloride and ethanoic acid both dissolve in water. All hydrogen chloride molecules ionise in water. Approximately 1% of ethanoic acid molecules ionise in water. A solution is made by dissolving 1 g of hydrogen chloride in 1 dm³ of water. Which is the correct description of this solution?","opts":["A concentrated solution of a strong acid","A concentrated solution of a weak acid","A dilute solution of a strong acid","A dilute solution of a weak acid"],"ans":[2],"ms":"a dilute solution of a strong acid","marks":1},{"t":"mcq","exam":"June 2021","q":"09.2","stem":"All hydrogen chloride molecules ionise in water. Approximately 1% of ethanoic acid molecules ionise in water. Which solution would have the lowest pH?","opts":["0.1 mol/dm³ ethanoic acid solution","0.1 mol/dm³ hydrogen chloride solution","1.0 mol/dm³ ethanoic acid solution","1.0 mol/dm³ hydrogen chloride solution"],"ans":[3],"ms":"1.0 mol/dm³ hydrogen chloride solution","marks":1},{"t":"mcq","exam":"June 2023","q":"05.2","stem":"The concentration of an acid can be measured in mol/dm³. Which combination of changes increases the concentration of an acid?","opts":["The mass of acid dissolved is halved and the volume of the solution is halved.","The mass of acid dissolved is halved and the volume of the solution is doubled.","The mass of acid dissolved is doubled and the volume of the solution is halved.","The mass of acid dissolved is doubled and the volume of the solution is doubled."],"ans":[2],"ms":"the mass of acid dissolved is doubled and the volume of the solution is halved","marks":1},{"t":"mcq","exam":"June 2025","q":"08.5","stem":"Table 4 gives information about solutions of two acids. HCl: concentration of solution 0.1 mol/dm³, 100% of acid molecules ionised. HCN: concentration of solution 2.0 mol/dm³, 0.01% of acid molecules ionised. Which is a correct statement about the solutions of HCl and HCN in Table 4?","opts":["The HCl is a more concentrated and stronger acid than the HCN.","The HCl is a more concentrated and weaker acid than the HCN.","The HCl is a more dilute and stronger acid than the HCN.","The HCl is a more dilute and weaker acid than the HCN."],"ans":[2],"ms":"the HCl is a more dilute and stronger acid than the HCN","marks":1},{"t":"mcq","exam":"June 2024","q":"07.3","stem":"When iron reacts with chlorine, 0.12 mol of iron reacts with 0.18 mol of chlorine (Cl₂). Which is the correct equation for the reaction?","opts":["Fe + Cl₂ → FeCl₂","Fe + 3 Cl₂ → FeCl₆","2 Fe + Cl₂ → 2 FeCl","2 Fe + 3 Cl₂ → 2 FeCl₃"],"ans":[3],"ms":"2 Fe + 3 Cl₂ → 2 FeCl₃","marks":1}]},{"id":"L4","kind":"main","title":"Electrolysis I","code":"RP3","sub":"What forms at each electrode","items":[{"t":"q","exam":"June 2018","q":"06.1","marks":2,"rp":"RP3","img":"img/qp_june2018_6.webp","W":753,"end":446,"y":391,"ms":"img/ms_june2018_06.1.webp","paper":false},{"t":"q","exam":"June 2018","q":"06.3","marks":2,"rp":"RP3","img":"img/qp_june2018_6.webp","W":753,"end":1959,"y":1126,"ms":"img/ms_june2018_06.3.webp","paper":false},{"t":"q","exam":"June 2018","q":"06.4","marks":3,"rp":"RP3","img":"img/qp_june2018_6.webp","W":753,"end":2056,"y":1965,"ms":"img/ms_june2018_06.4.webp","paper":false},{"t":"card","exam":"June 2019","q":"07.4","marks":3,"front":"Aluminium is produced by electrolysing a molten mixture of aluminium oxide and cryolite. Oxygen is produced at the positive electrode. Explain why the positive electrode must be continually replaced.","pts":[["The electrode reacts with oxygen",""],["The electrode is carbon / graphite",""],["(So) carbon dioxide is produced","allow (so) the electrode / carbon / graphite is used up or burned away; ignore worn away / corroded"]],"note":""},{"t":"q","exam":"June 2020","q":"04.1","marks":2,"rp":"RP3","img":"img/qp_june2020_4.webp","W":753,"end":901,"y":846,"ms":"img/ms_june2020_04.1.webp","paper":false},{"t":"q","exam":"June 2020","q":"04.2","marks":1,"rp":"RP3","img":"img/qp_june2020_4.webp","W":753,"end":1042,"y":907,"ms":"img/ms_june2020_04.2.webp","paper":false},{"t":"q","exam":"June 2020","q":"04.3","marks":3,"rp":"RP3","img":"img/qp_june2020_4.webp","W":753,"end":1102,"y":1048,"ms":"img/ms_june2020_04.3.webp","paper":false},{"t":"q","exam":"June 2020","q":"04.4","marks":2,"rp":"RP3","img":"img/qp_june2020_4.webp","W":753,"end":1303,"y":1108,"ms":"img/ms_june2020_04.4.webp","paper":false},{"t":"card","exam":"June 2019","q":"07.1","marks":2,"front":"Aluminium is produced by electrolysing a molten mixture of aluminium oxide and cryolite. Explain why a mixture is used as the electrolyte instead of using only aluminium oxide.","pts":[["Mixture has a lower melting point (than aluminium oxide)","allow cryolite lowers the melting point; ignore boiling point; do not accept cryolite is a catalyst"],["(So) less energy needed","ignore cost"]],"note":""},{"t":"q","exam":"June 2021","q":"07.3","marks":3,"rp":"RP3","img":"img/qp_june2021_7.webp","W":753,"end":1520,"y":395,"ms":"img/ms_june2021_07.3.webp","paper":false},{"t":"q","exam":"June 2021","q":"07.4","marks":4,"rp":"RP3","img":"img/qp_june2021_7.webp","W":753,"end":2219,"y":1526,"ms":"img/ms_june2021_07.4.webp","paper":false},{"t":"q","exam":"June 2021","q":"07.5","marks":1,"rp":"RP3","img":"img/qp_june2021_7.webp","W":753,"end":2299,"y":2225,"ms":"img/ms_june2021_07.5.webp","paper":false}]},{"id":"L5","kind":"main","title":"Electrolysis II","code":"RP3","sub":"Aqueous solutions with inert electrodes","items":[{"t":"q","exam":"June 2021","q":"07.6","marks":1,"rp":"RP3","img":"img/qp_june2021_7.webp","W":753,"end":2420,"y":2305,"ms":"img/ms_june2021_07.6.webp","paper":false},{"t":"q","exam":"June 2021","q":"07.7","marks":1,"rp":"RP3","img":"img/qp_june2021_7.webp","W":753,"end":2546,"y":2426,"ms":"img/ms_june2021_07.7.webp","paper":false},{"t":"q","exam":"June 2022","q":"06.6","marks":3,"rp":"RP3","img":"img/qp_june2022_6.webp","W":753,"end":1656,"y":1555,"ms":"img/ms_june2022_06.6.webp","paper":false},{"t":"card","exam":"June 2019","q":"07.6","marks":2,"front":"Sodium metal and chlorine gas are produced by the electrolysis of molten sodium chloride. Explain why sodium chloride solution cannot be used as the electrolyte to produce sodium metal.","pts":[["Hydrogen (gas) would be produced (instead of sodium)",""],["(Because) sodium is more reactive than hydrogen",""]],"note":""},{"t":"q","exam":"June 2023","q":"07.3","marks":4,"rp":"RP3","img":"img/qp_june2023_7.webp","W":753,"end":1034,"y":965,"ms":"img/ms_june2023_07.3.webp","paper":false},{"t":"q","exam":"June 2023","q":"07.4","marks":2,"rp":"RP3","img":"img/qp_june2023_7.webp","W":753,"end":1258,"y":1040,"ms":"img/ms_june2023_07.4.webp","paper":false},{"t":"q","exam":"June 2024","q":"05.3","marks":1,"rp":"RP3","img":"img/qp_june2024_5.webp","W":753,"end":399,"y":324,"ms":"img/ms_june2024_05.3.webp","paper":false},{"t":"card","exam":"June 2021","q":"07.1","marks":2,"front":"Electrolysis and chemical cells both involve chemical reactions and electricity. Explain the difference between the processes in electrolysis and in a chemical cell.","pts":[["Electrolysis uses electricity to produce a chemical reaction","allow electrolysis uses electricity to decompose a compound / electrolyte; allow voltage / potential difference / current for electricity"],["(But) cells use a chemical reaction to produce electricity",""]],"note":""},{"t":"q","exam":"June 2024","q":"05.4","marks":1,"rp":"RP3","img":"img/qp_june2024_5.webp","W":753,"end":739,"y":405,"ms":"img/ms_june2024_05.4.webp","paper":false},{"t":"q","exam":"June 2024","q":"05.5","marks":3,"rp":"RP3","img":"img/qp_june2024_5.webp","W":753,"end":1564,"y":745,"ms":"img/ms_june2024_05.5.webp","paper":false},{"t":"q","exam":"Specimen","q":"01.6","marks":1,"rp":"RP3","img":"img/qp_specimen_1.webp","W":793,"end":1922,"y":1623,"ms":"img/ms_specimen_01.6.webp","paper":false}]},{"id":"R3","kind":"relax","title":"Relaxing round: Electrodes & Redox","code":"","sub":"Five quick tick-box questions","items":[{"t":"mcq","exam":"June 2019","q":"07.2","stem":"Aluminium is produced by electrolysing a molten mixture of aluminium oxide and cryolite. What happens at the negative electrode during the production of aluminium?","opts":["Aluminium atoms gain electrons.","Aluminium atoms lose electrons.","Aluminium ions gain electrons.","Aluminium ions lose electrons."],"ans":[2],"ms":"aluminium ions gain electrons","marks":1},{"t":"mcq","exam":"June 2022","q":"06.1","stem":"Molten sodium chloride is electrolysed in an industrial process to produce sodium. Which is the correct half equation for the production of sodium?","opts":["Na + e⁻ → Na⁺","Na → Na⁺ + e⁻","Na⁺ + e⁻ → Na","Na⁺ → Na + e⁻"],"ans":[2],"ms":"Na⁺ + e⁻ → Na","marks":1},{"t":"mcq","exam":"June 2022","q":"06.3","stem":"A mesh is used to keep the products of the electrolysis apart. Which type of particle passes through the mesh in the electrolysis of molten sodium chloride?","opts":["Atom","Electron","Ion","Molecule"],"ans":[2],"ms":"ion","marks":1},{"t":"mcq","exam":"Specimen","q":"01.5","stem":"Why does potassium iodide solution conduct electricity?","opts":["It contains a metal","It contains electrons which can move","It contains ions which can move","It contains water"],"ans":[2],"ms":"it contains ions which can move","marks":1},{"t":"mcq","exam":"June 2023","q":"09.3","stem":"A student investigated displacement reactions of four different metals represented by A, B, C and D. A, B, C and D are not the actual chemical symbols for the metals. The ionic equation for Reaction 1 is: A + 2 B⁺ → 2 B + A²⁺. Why is this a redox reaction?","opts":["A gains electrons and B⁺ loses electrons.","A loses electrons and B⁺ gains electrons.","Both A and B⁺ gain electrons.","Both A and B⁺ lose electrons."],"ans":[1],"ms":"A loses electrons and B⁺ gains electrons","marks":1}]},{"id":"L6","kind":"main","title":"Temperature Changes I","code":"RP4","sub":"Polystyrene cups and thermometers","items":[{"t":"q","exam":"June 2018","q":"05.1","marks":2,"rp":"RP4","img":"img/qp_june2018_5.webp","W":753,"end":975,"y":356,"ms":"img/ms_june2018_05.1.webp","paper":true},{"t":"q","exam":"June 2018","q":"05.2","marks":1,"rp":"RP4","img":"img/qp_june2018_5.webp","W":753,"end":1092,"y":981,"ms":"img/ms_june2018_05.2.webp","paper":false},{"t":"q","exam":"June 2018","q":"05.3","marks":4,"rp":"RP4","img":"img/qp_june2018_5.webp","W":753,"end":1285,"y":1098,"ms":"img/ms_june2018_05.3.webp","paper":false},{"t":"card","exam":"June 2023","q":"04.2","marks":2,"front":"The reaction between hydrogen and chlorine is exothermic. Explain why this reaction releases energy to the surroundings.","pts":[["Energy is needed to break bonds and energy is released when bonds form",""],["(And) the energy released is greater than the energy needed","allow the energy transferred in bond making is greater than the energy transferred in bond breaking; allow the overall energy change is negative"]],"note":""},{"t":"q","exam":"June 2019","q":"09.1","marks":2,"rp":"RP4","img":"img/qp_june2019_9.webp","W":753,"end":1466,"y":365,"ms":"img/ms_june2019_09.1.webp","paper":false},{"t":"q","exam":"June 2019","q":"09.2","marks":4,"rp":"RP4","img":"img/qp_june2019_9.webp","W":753,"end":1626,"y":1472,"ms":"img/ms_june2019_09.2.webp","paper":true},{"t":"q","exam":"June 2019","q":"09.3","marks":1,"rp":"RP4","img":"img/qp_june2019_9.webp","W":753,"end":1806,"y":1632,"ms":"img/ms_june2019_09.3.webp","paper":false},{"t":"card","exam":"June 2020","q":"06.1","marks":1,"front":"The displacement reaction between aluminium and iron oxide has a high activation energy. What is meant by ‘activation energy’?","pts":[["The (minimum) energy needed for particles to react, or the (minimum) energy needed for a reaction to occur","allow the (minimum) energy needed to start a reaction"]],"note":""},{"t":"q","exam":"June 2019","q":"09.4","marks":1,"rp":"RP4","img":"img/qp_june2019_9.webp","W":753,"end":1938,"y":1812,"ms":"img/ms_june2019_09.4.webp","paper":false},{"t":"q","exam":"June 2020","q":"02.3","marks":4,"rp":"RP4","img":"img/qp_june2020_2.webp","W":753,"end":875,"y":663,"ms":"img/ms_june2020_02.3.webp","paper":false},{"t":"q","exam":"June 2020","q":"09.1","marks":1,"rp":"RP4","img":"img/qp_june2020_9.webp","W":753,"end":1261,"y":996,"ms":"img/ms_june2020_09.1.webp","paper":false}]},{"id":"L7","kind":"main","title":"Temperature Changes II","code":"RP4","sub":"Graphs, gradients and extrapolation","items":[{"t":"q","exam":"June 2020","q":"09.2","marks":3,"rp":"RP4","img":"img/qp_june2020_9.webp","W":753,"end":1361,"y":1267,"ms":"img/ms_june2020_09.2.webp","paper":false},{"t":"q","exam":"June 2020","q":"09.3","marks":3,"rp":"RP4","img":"img/qp_june2020_9.webp","W":753,"end":1617,"y":1367,"ms":"img/ms_june2020_09.3.webp","paper":true},{"t":"q","exam":"June 2021","q":"06.3","marks":4,"rp":"RP4","img":"img/qp_june2021_6.webp","W":753,"end":1011,"y":579,"ms":"img/ms_june2021_06.3.webp","paper":false},{"t":"card","exam":"June 2024","q":"08.1","marks":3,"front":"This question is about propane (C₃H₈). Explain why propane has a low boiling point.","pts":[["Propane is a small molecule","allow propane is a simple molecule"],["(So) the forces between molecules are weak, or (so) the intermolecular forces are weak","do not accept covalent bonds are weak"],["(Which) require little energy to overcome","do not accept answers in terms of breaking covalent bonds"]],"note":""},{"t":"q","exam":"June 2022","q":"02.1","marks":6,"rp":"RP4","img":"img/qp_june2022_2.webp","W":753,"end":902,"y":193,"ms":"img/ms_june2022_02.1.webp","paper":false},{"t":"q","exam":"June 2022","q":"02.2","marks":5,"rp":"RP4","img":"img/qp_june2022_2.webp","W":753,"end":1119,"y":908,"ms":"img/ms_june2022_02.2.webp","paper":true},{"t":"q","exam":"June 2022","q":"02.3","marks":2,"rp":"RP4","img":"img/qp_june2022_2.webp","W":753,"end":1308,"y":1125,"ms":"img/ms_june2022_02.3.webp","paper":true},{"t":"card","exam":"June 2019","q":"05.3","marks":3,"front":"This question is about ammonia, NH₃. Explain why ammonia has a low boiling point. You should refer to structure and bonding in your answer.","pts":[["(Ammonia has) small molecules","allow (ammonia has) a simple molecular (structure)"],["(Ammonia has) weak intermolecular forces","allow weak intermolecular bonds; do not accept weak covalent bonds"],["(So) little energy is needed to overcome the intermolecular forces","allow little energy needed to break the intermolecular bonds / separate the molecules; do not accept breaking covalent bonds"]],"note":""},{"t":"q","exam":"June 2022","q":"02.4","marks":1,"rp":"RP4","img":"img/qp_june2022_2.webp","W":753,"end":2453,"y":1314,"ms":"img/ms_june2022_02.4.webp","paper":true},{"t":"q","exam":"June 2023","q":"02.1","marks":2,"rp":"RP4","img":"img/qp_june2023_2.webp","W":753,"end":863,"y":378,"ms":"img/ms_june2023_02.1.webp","paper":false},{"t":"q","exam":"June 2023","q":"02.2","marks":3,"rp":"RP4","img":"img/qp_june2023_2.webp","W":753,"end":1549,"y":869,"ms":"img/ms_june2023_02.2.webp","paper":true}]},{"id":"R4","kind":"relax","title":"Relaxing round: Groups & Structure","code":"","sub":"Five quick tick-box questions","items":[{"t":"mcq","exam":"June 2024","q":"02.6","stem":"The elements in Group 7 are called the halogens. A more reactive halogen can displace a less reactive halogen from a solution of its salt. Which combination of solutions will produce a reaction when mixed?","opts":["Chlorine and potassium fluoride","Chlorine and potassium bromide","Bromine and potassium fluoride","Bromine and potassium chloride"],"ans":[1],"ms":"chlorine and potassium bromide","marks":1},{"t":"mcq","exam":"June 2024","q":"02.7","stem":"Which of the following describes the trends going down Group 7?","opts":["Relative molecular mass decreases and boiling point decreases.","Relative molecular mass decreases and boiling point increases.","Relative molecular mass increases and boiling point decreases.","Relative molecular mass increases and boiling point increases."],"ans":[3],"ms":"relative molecular mass increases and boiling point increases","marks":1},{"t":"mcq","exam":"June 2025","q":"02.5","stem":"Methane consists of small molecules. Poly(ethene) is a polymer. Why does poly(ethene) have a higher melting point than methane?","opts":["Poly(ethene) has more covalent bonds to break than methane.","Poly(ethene) has no intermolecular forces to overcome.","Poly(ethene) has stronger covalent bonds to break than methane.","Poly(ethene) has stronger intermolecular forces to overcome than methane."],"ans":[3],"ms":"poly(ethene) has stronger intermolecular forces to overcome than methane","marks":1},{"t":"mcq","exam":"June 2020","q":"02.1","stem":"This question is about metals and the reactivity series. Which two statements are properties of most transition metals?","opts":["They are soft metals.","They form colourless compounds.","They form ions with different charges.","They have high melting points.","They have low densities."],"ans":[2,3],"ms":"they form ions with different charges (1 mark); they have high melting points (1 mark)","marks":2},{"t":"mcq","exam":"Specimen","q":"01.1","stem":"Table 1 shows the boiling points of some Group 7 elements: fluorine −188 °C, chlorine −35 °C, iodine 184 °C. Why does iodine have a higher boiling point than chlorine?","opts":["Iodine is ionic and chlorine is covalent","Iodine is less reactive than chlorine","The covalent bonds between iodine atoms are stronger","The forces between iodine molecules are stronger"],"ans":[3],"ms":"the forces between iodine molecules are stronger","marks":1}]},{"id":"L8","kind":"main","title":"Temperature Changes III","code":"RP4","sub":"Uncertainty, errors and valid methods","items":[{"t":"q","exam":"June 2023","q":"02.3","marks":2,"rp":"RP4","img":"img/qp_june2023_2.webp","W":753,"end":1678,"y":1555,"ms":"img/ms_june2023_02.3.webp","paper":true},{"t":"q","exam":"June 2023","q":"02.4","marks":1,"rp":"RP4","img":"img/qp_june2023_2.webp","W":753,"end":1955,"y":1684,"ms":"img/ms_june2023_02.4.webp","paper":false},{"t":"q","exam":"June 2023","q":"02.5","marks":2,"rp":"RP4","img":"img/qp_june2023_2.webp","W":753,"end":2069,"y":1961,"ms":"img/ms_june2023_02.5.webp","paper":false},{"t":"card","exam":"June 2025","q":"04.5","marks":4,"front":"The elements in Group 7 of the periodic table are known as the halogens. Explain the trend in reactivity of the elements going down Group 7.","pts":[["Reactivity decreases (going down the group)",""],["(Because) the outer shell / electrons become further from the nucleus","allow the atoms become larger / have more shells; allow energy level for shell"],["(So) there is less (electrostatic) attraction between the nucleus and the outer electron(s)","allow (so) there is more shielding between the outer electron(s) and the nucleus"],["(So) gaining an electron is more difficult",""]],"note":""},{"t":"q","exam":"June 2023","q":"02.6","marks":1,"rp":"RP4","img":"img/qp_june2023_2.webp","W":753,"end":2327,"y":2075,"ms":"img/ms_june2023_02.6.webp","paper":false},{"t":"q","exam":"June 2024","q":"04.1","marks":2,"rp":"RP4","img":"img/qp_june2024_4.webp","W":753,"end":1057,"y":942,"ms":"img/ms_june2024_04.1.webp","paper":true},{"t":"q","exam":"June 2024","q":"04.2","marks":4,"rp":"RP4","img":"img/qp_june2024_4.webp","W":753,"end":1191,"y":1063,"ms":"img/ms_june2024_04.2.webp","paper":false},{"t":"card","exam":"June 2021","q":"04.3","marks":4,"front":"This question is about Group 1 elements. Explain why the reactivity of elements changes going down Group 1.","pts":[["Reactivity increases (going down the group)",""],["(Because) the outer electron / shell is further from the nucleus","allow there are more shells / the atoms get larger"],["(So) there is less attraction between the nucleus and the outer electron / shell","allow (so) there is more shielding from the nucleus; do not accept incorrect attractions"],["(So) the atom loses an electron more easily",""]],"note":""},{"t":"q","exam":"June 2024","q":"04.3","marks":2,"rp":"RP4","img":"img/qp_june2024_4.webp","W":753,"end":1272,"y":1197,"ms":"img/ms_june2024_04.3.webp","paper":false},{"t":"q","exam":"June 2024","q":"04.5","marks":3,"rp":"RP4","img":"img/qp_june2024_4.webp","W":753,"end":1813,"y":1683,"ms":"img/ms_june2024_04.5.webp","paper":false},{"t":"q","exam":"June 2024","q":"04.6","marks":1,"rp":"RP4","img":"img/qp_june2024_4.webp","W":753,"end":1946,"y":1819,"ms":"img/ms_june2024_04.6.webp","paper":false}]},{"id":"L9","kind":"main","title":"Boss Level: Lab Skills","code":"Skills","sub":"Gas collection, distillation and planning","items":[{"t":"q","exam":"June 2019","q":"06.1","marks":2,"rp":"PS","img":"img/qp_june2019_6.webp","W":753,"end":1167,"y":665,"ms":"img/ms_june2019_06.1.webp","paper":false},{"t":"q","exam":"June 2019","q":"08.1","marks":1,"rp":"PS","img":"img/qp_june2019_8.webp","W":753,"end":891,"y":839,"ms":"img/ms_june2019_08.1.webp","paper":false},{"t":"q","exam":"June 2019","q":"08.2","marks":2,"rp":"PS","img":"img/qp_june2019_8.webp","W":753,"end":1791,"y":897,"ms":"img/ms_june2019_08.2.webp","paper":false},{"t":"card","exam":"June 2025","q":"06.1","marks":4,"front":"Aluminium oxide is an ionic compound. Explain why aluminium oxide has a very high melting point.","pts":[["Strong electrostatic forces","allow strong forces of attraction; ignore strong ionic bonds"],["between oppositely charged ions","allow between (positive) aluminium ions and (negative) oxide ions / Al³⁺ and O²⁻"],["(which) act in all directions (in the giant structure)",""],["(so) need a lot of energy to break (the many strong bonds)",""]],"note":""},{"t":"q","exam":"June 2020","q":"08.4","marks":1,"rp":"PS","img":"img/qp_june2020_8.webp","W":753,"end":1277,"y":1223,"ms":"img/ms_june2020_08.4.webp","paper":false},{"t":"q","exam":"June 2024","q":"02.4","marks":2,"rp":"PS","img":"img/qp_june2024_2.webp","W":753,"end":1709,"y":1067,"ms":"img/ms_june2024_02.4.webp","paper":true},{"t":"q","exam":"June 2024","q":"02.5","marks":1,"rp":"PS","img":"img/qp_june2024_2.webp","W":753,"end":1846,"y":1715,"ms":"img/ms_june2024_02.5.webp","paper":false},{"t":"card","exam":"June 2022","q":"03.2","marks":3,"front":"This question is about different forms of carbon. Explain why diamond has a very high melting point.","pts":[["(Covalent) bonds are strong",""],["(And many covalent) bonds must be broken",""],["(So) a lot of energy is required",""]],"note":""},{"t":"q","exam":"June 2024","q":"06.2","marks":6,"rp":"PS","img":"img/qp_june2024_6.webp","W":753,"end":1404,"y":1151,"ms":"img/ms_june2024_06.2.webp","paper":false},{"t":"q","exam":"Specimen","q":"04.4","marks":2,"rp":"RP8","img":"img/qp_specimen_4.webp","W":793,"end":855,"y":785,"ms":"img/ms_specimen_04.4.webp","paper":false},{"t":"card","exam":"June 2018","q":"07.2","marks":3,"front":"This question is about Group 7 elements. Chlorine is more reactive than iodine. Explain why chlorine is more reactive than iodine.","pts":[["(Chlorine's) outer electrons / shell closer to the nucleus","allow chlorine has fewer shells; allow chlorine atom is smaller than iodine atom; ignore chlorine has fewer outer shells"],["(So) the chlorine nucleus has greater attraction for outer electrons / shell","allow chlorine has less shielding; do not accept incorrect types of attraction"],["(So) chlorine gains an electron more easily",""]],"note":"Maximum 2 marks if the answer refers to chloride / iodide instead of chlorine / iodine. Converse statements and energy levels for shells are allowed throughout."},{"t":"q","exam":"Specimen","q":"04.5","marks":1,"rp":"RP8","img":"img/qp_specimen_4.webp","W":793,"end":971,"y":861,"ms":"img/ms_specimen_04.5.webp","paper":false},{"t":"q","exam":"Specimen","q":"07.1","marks":2,"rp":"RP5","img":"img/qp_specimen_7.webp","W":793,"end":1192,"y":293,"ms":"img/ms_specimen_07.1.webp","paper":false},{"t":"q","exam":"Specimen","q":"07.2","marks":1,"rp":"RP5","img":"img/qp_specimen_7.webp","W":793,"end":1290,"y":1198,"ms":"img/ms_specimen_07.2.webp","paper":false},{"t":"card","exam":"June 2024","q":"07.2","marks":3,"front":"Pure iron is too soft for many uses. Explain why mixing iron with other metals makes alloys which are harder than pure iron.","pts":[["(The alloy / mixture has) different sized atoms",""],["(So the) layers are distorted",""],["(So the) layers cannot easily slide","allow (so the) atoms cannot slide over each other"]],"note":"Positive / metal ions are allowed for atoms throughout."},{"t":"q","exam":"Specimen","q":"07.4","marks":1,"rp":"RP5","img":"img/qp_specimen_7.webp","W":793,"end":1427,"y":1355,"ms":"img/ms_specimen_07.4.webp","paper":false},{"t":"q","exam":"Specimen","q":"07.6","marks":2,"rp":"RP5","img":"img/qp_specimen_7.webp","W":793,"end":1730,"y":1618,"ms":"img/ms_specimen_07.6.webp","paper":false},{"t":"q","exam":"Specimen","q":"07.7","marks":2,"rp":"RP5","img":"img/qp_specimen_7.webp","W":793,"end":1890,"y":1736,"ms":"img/ms_specimen_07.7.webp","paper":false}]}];
+const KEY="erin-practical-lab-v1";
+const $=s=>document.querySelector(s);
+const app=$("#app");
+let prog={};
+try{prog=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){prog={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(prog))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function maxOf(L){return L.items.reduce((a,i)=>a+i.marks,0)}
+function totalPts(){return LEVELS.reduce((a,L)=>a+((prog[L.id]&&prog[L.id].best)||0),0)}
+function updTotal(){$("#total").textContent=totalPts()}
+function unlocked(i){return i===0||!!(prog[LEVELS[i-1].id]&&prog[LEVELS[i-1].id].done)}
+function pct(a,b){return b?Math.round(100*a/b):0}
+const ICON={flip:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>',
+ phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
+ aud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="9" r="2.5"/><path d="M2.5 20c.6-3.6 2.8-5.5 5.5-5.5s4.9 1.9 5.5 5.5M13.5 15.2c.9-.8 1.9-1.2 3-1.2 2.2 0 4 1.6 4.5 4.8"/></svg>'};
+
+/* ---------- map ---------- */
+function renderMap(){
+  updTotal();window.scrollTo(0,0);
+  let n=0;
+  const cells=LEVELS.map((L,i)=>{
+    const p=prog[L.id]||{},mx=maxOf(L),lock=!unlocked(i);
+    const isR=L.kind==="relax";if(!isR)n++;
+    const sym=isR?"★":L.code;
+    const qn=L.items.filter(x=>x.t!=="card").length,cn=L.items.filter(x=>x.t==="card").length;
+    const count=isR?`${qn} questions`:`${qn} questions · ${cn} bonus`;
+    const ind=p.done?`<div class="ind" aria-hidden="true"><i style="left:${pct(p.best,mx)}%"></i></div>`:"";
+    return `<button class="cell${isR?" relax":""}${p.done?" done":""}" data-i="${i}" ${lock?"disabled":""} type="button" aria-label="${esc(L.title)}${lock?" (locked)":""}">
+      <span class="z"><span>${isR?"RELAX":"LEVEL "+n}</span><span>${lock?"LOCKED":""}</span></span>
+      ${p.done?`<span class="chip">${p.best}/${mx}</span>`:""}
+      <span class="sym">${esc(sym)}</span><span class="nm">${esc(L.title.replace("Relaxing round: ",""))}</span>
+      <span class="ms">${count} · ${mx} marks</span>${ind}</button>`}).join("");
+  app.innerHTML=`<section class="hero">
+    <span class="eyebrow">AQA GCSE Chemistry · Paper 1 Higher · Required practicals</span>
+    <h1>Real exam questions, one practical at a time.</h1>
+    <p>Every question comes straight from a past paper (June 2018 to June 2025 and the Specimen). Write your answer, open the official mark scheme, then mark yourself honestly. Bonus flashcards and relaxing quiz rounds sit between the questions.</p>
+    <div class="how"><span><i class="dot" style="background:var(--accent)"></i>Exam question</span><span><i class="dot" style="background:var(--lilac)"></i>Bonus flashcard</span><span><i class="dot" style="background:var(--gold)"></i>Relaxing round with lifelines</span></div>
+  </section>
+  <div class="grid">${cells}</div>
+  <div class="foot"><span>Progress is saved in this browser only.</span><span class="spacer"></span><span class="confirm" id="resetBox"><button class="btn ghost" id="reset" type="button">Reset progress</button></span></div>`;
+  app.querySelectorAll(".cell").forEach(b=>b.onclick=()=>startLevel(+b.dataset.i));
+  $("#reset").onclick=()=>{$("#resetBox").innerHTML=`<span>Delete all scores?</span><button class="btn" id="rsYes" type="button">Yes, reset</button><button class="btn ghost" id="rsNo" type="button">Keep them</button>`;
+    $("#rsYes").onclick=()=>{prog={};save();renderMap()};$("#rsNo").onclick=renderMap};
+}
+
+/* ---------- level runner ---------- */
+let run=null;
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function buildItems(L){
+  if(L.kind==="relax")return shuffle(L.items).map(m=>{const order=shuffle(m.opts.map((_,j)=>j));
+    return Object.assign({},m,{opts:order.map(j=>m.opts[j]),ans:m.ans.map(a=>order.indexOf(a)).sort((x,y)=>x-y)})});
+  // keep each multi-part question together and in paper order; shuffle the questions
+  const groups=[],byKey={};
+  L.items.filter(x=>x.t==="q").forEach(q=>{const k=q.exam+"|"+q.q.slice(0,2);if(!byKey[k]){byKey[k]=[];groups.push(byKey[k])}byKey[k].push(q)});
+  const sg=shuffle(groups),qs=sg.flat(),cards=shuffle(L.items.filter(x=>x.t==="card"));
+  const n=qs.length,m=cards.length,slots=new Set();
+  // bonus cards only go between whole questions, never between parts of one question
+  const bounds=[];let acc=0;sg.slice(0,-1).forEach(gp=>{acc+=gp.length;bounds.push(acc)});
+  cards.forEach((_,c)=>{const t=(c+1)*n/(m+1)+(Math.random()*2-1);
+    const free=bounds.filter(x=>!slots.has(x));
+    if(free.length){slots.add(free.reduce((best,x)=>Math.abs(x-t)<Math.abs(best-t)?x:best))}
+    else if(!slots.has(n))slots.add(n);
+    else{let s=Math.min(n-1,Math.max(1,Math.round(t)));while(slots.has(s)&&s<n-1)s++;slots.add(s)}});
+  const pos=[...slots].sort((a,b)=>a-b),out=[];let c=0;
+  qs.forEach((q,i)=>{out.push(q);while(c<cards.length&&pos[c]===i+1)out.push(cards[c++])});
+  while(c<cards.length)out.splice(out.length-1,0,cards[c++]);
+  return out}
+function startLevel(i){run={li:i,idx:0,score:0,res:[],items:buildItems(LEVELS[i]),ll:{fifty:false,phone:false,aud:false}};renderItem()}
+function steps(){return `<div class="steps" aria-hidden="true">${run.items.map((it,k)=>`<i class="${k<run.idx?(it.t==="card"?"c":"d"):k===run.idx?"now":""}"></i>`).join("")}</div>`}
+function head(){const L=LEVELS[run.li];return `<div class="bar"><button class="btn ghost" id="back" type="button">← Map</button><h2>${esc(L.title)}</h2><span class="spacer"></span><span class="pts"><b>${run.score}</b><span>/ ${maxOf(L)}</span></span></div>${steps()}`}
+function bindBack(){$("#back").onclick=()=>renderMap()}
+function next(got){run.res.push(got);run.score+=got;run.idx++;if(run.idx>=run.items.length)finish();else renderItem()}
+function renderItem(){
+  window.scrollTo(0,0);const it=run.items[run.idx];
+  if(it.t==="q")renderQ(it);else if(it.t==="card")renderCard(it);else renderMcq(it);
+}
+
+/* exam question */
+function renderQ(it){
+  const L=LEVELS[run.li];
+  const lh=Math.min(30,it.end-it.y);
+  app.innerHTML=head()+`<article class="panel">
+    <div class="meta"><span class="tag">${esc(it.exam)} · Q${esc(it.q)}</span><span class="eyebrow">${it.marks} mark${it.marks>1?"s":""} · ${esc(it.rp==="PS"?"Practical skills":it.rp)}</span></div>
+    <div class="sheet" id="sheet"><div class="crop" id="crop" style="aspect-ratio:${it.W}/${it.end}">
+      <img src="${it.img}" alt="Exam paper ${esc(it.exam)} question ${esc(it.q)} with its context" id="qimg">
+      <div class="hl" style="top:${(100*(it.y-6)/it.end).toFixed(3)}%;height:${(100*lh/it.end).toFixed(3)}%"></div></div></div>
+    <div class="row"><span class="eyebrow" style="flex:1;min-width:0">Answer the highlighted part, Question ${esc(it.q)}. Scroll up inside the paper for the context.</span><button class="btn ghost" id="zoom" type="button" aria-pressed="false" style="padding:.4em 1em;font-size:.85rem">Bigger text</button></div>
+    ${it.paper?`<div class="tip">This part needs a pen. Do it on paper (or describe what you would draw), then check the mark scheme.</div>`:""}
+    <label class="lab" for="ans">Your answer</label>
+    <textarea id="ans" placeholder="Write your answer as you would in the exam…"></textarea>
+    <div class="row"><button class="btn" id="check" type="button">Show the mark scheme</button><button class="btn ghost" id="skip" type="button">Skip (0 marks)</button></div>
+    <div id="msArea"></div></article>`;
+  bindBack();
+  const img=$("#qimg"),sheet=$("#sheet");
+  const go=()=>{const c=$("#crop");sheet.scrollTop=Math.max(0,c.clientHeight*(it.y/it.end)-90)};
+  if(img.complete)go();else img.onload=go;
+  $("#skip").onclick=()=>next(0);
+  $("#zoom").onclick=()=>{const z=sheet.classList.toggle("zoom");$("#zoom").setAttribute("aria-pressed",z);$("#zoom").textContent=z?"Fit to width":"Bigger text";go()};
+  $("#check").onclick=()=>{
+    const a=$("#ans").value.trim();$("#check").disabled=true;$("#skip").hidden=true;$("#ans").readOnly=true;
+    let pick=null;
+    $("#msArea").innerHTML=`<div class="msbox"><span class="eyebrow">Official mark scheme · ${esc(it.exam)} · ${esc(it.q)}</span>
+      <div class="msimg"><img src="${it.ms}" alt="Mark scheme for question ${esc(it.q)}"></div>
+      ${a?"":`<div class="tip">No written answer this time. Mark yourself on what you would have written.</div>`}
+      <span class="lab" id="mkl">How many marks did you earn? (max ${it.marks})</span>
+      <div class="marks" role="group" aria-labelledby="mkl">${Array.from({length:it.marks+1},(_,k)=>`<button class="mk" type="button" aria-pressed="false" data-k="${k}">${k}</button>`).join("")}</div>
+      <div class="row"><button class="btn" id="nx" type="button" disabled>Next</button></div></div>`;
+    $("#msArea").querySelectorAll(".mk").forEach(b=>b.onclick=()=>{pick=+b.dataset.k;$("#msArea").querySelectorAll(".mk").forEach(x=>x.setAttribute("aria-pressed",x===b));$("#nx").disabled=false});
+    $("#nx").onclick=()=>next(pick);
+    $("#msArea").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+  };
+}
+
+/* bonus flashcard */
+function renderCard(it){
+  app.innerHTML=head()+`<article class="panel">
+    <div class="bonus-h"><span class="tag">Bonus card</span><span class="eyebrow">${esc(it.exam)} · Q${esc(it.q)}</span></div>
+    <div class="scene"><div class="fc" id="fc">
+      <div class="face front"><span class="eyebrow">Question</span>
+        <div class="qq">${esc(it.front)} <span class="mk2">(${it.marks})</span></div>
+        <span class="eyebrow" style="margin-top:auto">Answer in your head or out loud, then flip.</span>
+        <button class="flipbtn" type="button" data-f aria-label="Flip card to see the answer">${ICON.flip}</button></div>
+      <div class="face back" aria-hidden="true"><span class="eyebrow">Mark scheme · ${it.marks} mark${it.marks>1?"s":""}</span>
+        ${it.pts.filter(p=>/:$/.test(p[0])&&!p[1]).map(p=>`<b>${esc(p[0])}</b>`).join("")}<ul>${it.pts.filter(p=>!(/:$/.test(p[0])&&!p[1])).map(p=>`<li>${esc(p[0])}${p[1]?`<small>${esc(p[1])}</small>`:""}</li>`).join("")}</ul>
+        ${it.note?`<div class="note">${esc(it.note)}</div>`:""}
+        <button class="flipbtn" type="button" data-f aria-label="Flip card back to the question">${ICON.flip}</button></div>
+    </div></div>
+    <div class="selfev"><div><label class="lab" for="sev">Score yourself (0 to ${it.marks})</label>
+      <input type="number" id="sev" min="0" max="${it.marks}" step="1" inputmode="numeric" placeholder="0–${it.marks}"></div>
+      <button class="btn lilac" id="bank" type="button">Bank bonus</button></div>
+    <div class="err" id="err" aria-live="polite"></div></article>`;
+  bindBack();
+  const fc=$("#fc");let seen=false;
+  app.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{fc.classList.toggle("flip");seen=true;const f=fc.classList.contains("flip");
+    fc.querySelector(".front").setAttribute("aria-hidden",f);fc.querySelector(".back").setAttribute("aria-hidden",!f)});
+  $("#bank").onclick=()=>{const v=$("#sev").value.trim(),n=Number(v);
+    if(!seen){$("#err").textContent="Flip the card first to compare with the mark scheme.";return}
+    if(v===""||!Number.isInteger(n)||n<0||n>it.marks){$("#err").textContent=`Enter a whole number from 0 to ${it.marks}.`;return}
+    next(n)};
+}
+
+/* relaxing round */
+function rnd(a,b){return a+Math.random()*(b-a)}
+function renderMcq(it){
+  const L=LEVELS[run.li],k=run.idx;
+  const sel=new Set(),gone=new Set();let locked=false;
+  const ladder=run.items.map((x,j)=>`<span class="${j===k?"now":j<k?(run.res[j]===x.marks?"ok":"no"):""}">Q${j+1} · ${x.marks} pt${x.marks>1?"s":""}</span>`).join("");
+  app.innerHTML=`<div class="bar"><button class="btn ghost" id="back" type="button">← Map</button><h2>${esc(L.title.replace("Relaxing round: ",""))}</h2><span class="spacer"></span><span class="pts"><b>${run.score}</b><span>/ ${maxOf(L)}</span></span></div>
+  <section class="stage">
+    <div class="row"><span class="eyebrow">Relaxing round · ${esc(it.exam)} · Q${esc(it.q)}</span><span class="spacer"></span>
+      <div class="lifelines">
+        <button class="ll" id="l50" type="button" ${run.ll.fifty?"disabled":""} aria-label="Fifty fifty: remove two wrong answers">50:50</button>
+        <button class="ll" id="lph" type="button" ${run.ll.phone?"disabled":""} aria-label="Phone a friend">${ICON.phone}</button>
+        <button class="ll" id="lau" type="button" ${run.ll.aud?"disabled":""} aria-label="Ask the audience">${ICON.aud}</button>
+      </div></div>
+    <div class="ladder">${ladder}</div>
+    <div class="lozenge">${esc(it.stem)}${it.ans.length>1?`<div class="small" style="margin-top:6px">Choose ${it.ans.length} answers.</div>`:""}</div>
+    <div class="opts">${it.opts.map((o,j)=>`<button class="opt" type="button" data-j="${j}"><b>${"ABCDE"[j]}:</b><span>${esc(o)}</span></button>`).join("")}</div>
+    <div id="helpP"></div><div id="helpA"></div>
+    <div class="row"><button class="btn" id="final" type="button" disabled style="background:var(--gold);color:#1A0E00">Final answer</button>
+      <span class="small">Lifelines are simulated, once each per round. Your friend and the audience can be wrong!</span></div>
+    <div id="verdict"></div>
+  </section>`;
+  bindBack();
+  const opts=[...app.querySelectorAll(".opt")];
+  const paint=()=>{opts.forEach(b=>b.classList.toggle("sel",sel.has(+b.dataset.j)));$("#final").disabled=sel.size!==it.ans.length};
+  opts.forEach(b=>b.onclick=()=>{if(locked)return;const j=+b.dataset.j;
+    if(sel.has(j))sel.delete(j);else{if(it.ans.length===1)sel.clear();if(sel.size<it.ans.length)sel.add(j)}paint()});
+  const wrong=()=>it.opts.map((_,j)=>j).filter(j=>!it.ans.includes(j)&&!gone.has(j));
+  const live=()=>it.opts.map((_,j)=>j).filter(j=>!gone.has(j));
+  $("#l50").onclick=()=>{if(run.ll.fifty||locked)return;run.ll.fifty=true;$("#l50").disabled=true;
+    const w=wrong().sort(()=>Math.random()-.5).slice(0,2);w.forEach(j=>{gone.add(j);sel.delete(j);opts[j].classList.add("gone");opts[j].disabled=true});paint()};
+  $("#lph").onclick=()=>{if(run.ll.phone||locked)return;run.ll.phone=true;$("#lph").disabled=true;
+    const p=gone.size?0.85:0.7;let picks=[];
+    it.ans.forEach(a=>{if(Math.random()<p)picks.push(a);else{const w=wrong().filter(x=>!picks.includes(x));picks.push(w.length?w[Math.floor(Math.random()*w.length)]:a)}});
+    picks=[...new Set(picks)].sort((a,b)=>a-b);const sure=Math.round(rnd(55,85));
+    $("#helpP").innerHTML=`<div class="helper"><span class="eyebrow">Phone a friend</span><div>“Hmm… I think it's <b>${picks.map(x=>"ABCDE"[x]).join(" and ")}</b>. I'm about ${sure}% sure.”</div><span class="small">Simulated friend: right most of the time, not always.</span></div>`};
+  $("#lau").onclick=()=>{if(run.ll.aud||locked)return;run.ll.aud=true;$("#lau").disabled=true;
+    const L2=live();const w={};L2.forEach(j=>w[j]=rnd(4,22));const boost=gone.size?rnd(45,70):rnd(30,60);
+    it.ans.forEach(a=>{if(!gone.has(a))w[a]+=boost/it.ans.length*(Math.random()<0.85?1:0.3)});
+    const s=L2.reduce((a,j)=>a+w[j],0);let ps=L2.map(j=>[j,Math.round(100*w[j]/s)]);
+    const diff=100-ps.reduce((a,x)=>a+x[1],0);ps[0][1]+=diff;const top=Math.max(...ps.map(x=>x[1]));
+    $("#helpA").innerHTML=`<div class="helper"><span class="eyebrow">Ask the audience</span><div class="aud">${ps.map(([j,v])=>`<div><span>${v}%</span><i style="height:${Math.max(4,Math.round(78*v/top))}%"></i><b>${"ABCDE"[j]}</b></div>`).join("")}</div><span class="small">Simulated audience vote.</span></div>`};
+  $("#final").onclick=()=>{if(locked)return;locked=true;$("#final").hidden=true;
+    let got=0;sel.forEach(j=>{if(it.ans.includes(j))got++});
+    opts.forEach(b=>{const j=+b.dataset.j;b.disabled=true;b.classList.remove("sel");if(it.ans.includes(j))b.classList.add("right");else if(sel.has(j))b.classList.add("wrong")});
+    const last=run.idx===run.items.length-1;
+    $("#verdict").innerHTML=`<div class="verdict"><b>${got===it.marks?"Correct!":got>0?"Partly right.":"Not this time."}</b> ${got} / ${it.marks} point${it.marks>1?"s":""}.<div class="small" style="margin-top:4px">Mark scheme: ${esc(it.ms)}</div></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="nx" type="button" style="background:var(--gold);color:#1A0E00">${last?"Finish round":"Next question"}</button></div>`;
+    $("#nx").onclick=()=>next(got)};
+}
+
+/* ---------- level complete ---------- */
+function finish(){
+  const L=LEVELS[run.li],mx=maxOf(L),s=run.score,p=prog[L.id]||{};
+  prog[L.id]={done:true,best:Math.max(s,p.best||0),last:s};save();updTotal();
+  const pc=pct(s,mx),msg=pc>=85?"Outstanding, that is grade 9 territory.":pc>=70?"Strong work. A couple of points to tidy up.":pc>=50?"Good progress. Replay to push it higher.":"Worth another go. Read each mark scheme carefully.";
+  const nextI=run.li+1<LEVELS.length?run.li+1:null;
+  window.scrollTo(0,0);
+  app.innerHTML=`<article class="panel done-panel">
+    <span class="eyebrow">${esc(L.title)} complete</span>
+    <div class="big mono">${s}<span style="color:var(--muted);font-size:.5em"> / ${mx}</span></div>
+    <div class="ind indwide" role="img" aria-label="Score ${pc}% on the universal indicator scale"><i style="left:${pc}%"></i></div>
+    <span class="eyebrow">Score on the universal indicator scale · ${pc}%</span>
+    <p style="margin:0;max-width:46ch">${msg} ${s<(p.best||0)?`Your best is still ${p.best}.`:""}</p>
+    <div class="row" style="justify-content:center"><button class="btn ghost" id="again" type="button">Play again</button>
+      <button class="btn ghost" id="map" type="button">Level map</button>
+      ${nextI!==null?`<button class="btn" id="nxl" type="button">Next: ${esc(LEVELS[nextI].title.replace("Relaxing round: ","Relax · "))}</button>`:""}</div>
+  </article>`;
+  $("#again").onclick=()=>startLevel(run.li);$("#map").onclick=renderMap;
+  if(nextI!==null)$("#nxl").onclick=()=>startLevel(nextI);
+}
+$("#home").onclick=renderMap;
+renderMap();
+</script>
+
+</body>
+</html>
